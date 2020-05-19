@@ -257,8 +257,22 @@ class InstallCSpice(object):
     @staticmethod
     def check_for_spice():
         print("Checking the path", cspice_dir)
-        if not os.path.exists(cspice_dir):
+        try:
+            spiceypy_cspice_path = os.path.expanduser(os.environ['SPICEYPY_CSPICE_PATH'])
+            if not os.path.isabs(spiceypy_cspice_path):
+                raise EnvironmentError("spiceypy_cspice_path must be an absolute path. Got {0}".format(
+                    spiceypy_cspice_path))
+            print("Environment variable spiceypy_cspice_path is set. Installing CSPICE from {0}.".format(
+                spiceypy_cspice_path))
+            untar_cmd = "tar xzf {0} -C {1}".format(spiceypy_cspice_path, root_dir)
+            proc = subprocess.Popen(untar_cmd, shell=True)
+            proc.wait()
+            print(f"Successfully unpacked CSPICE archive. Return code {proc.returncode}")
+            return True
+        except KeyError as err:
+            pass
 
+        if not os.path.exists(cspice_dir):
             message = "Unable to find CSPICE at {0}. Attempting to Download CSPICE For you:".format(
                 cspice_dir
             )
